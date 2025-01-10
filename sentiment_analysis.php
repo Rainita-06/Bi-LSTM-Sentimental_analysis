@@ -38,26 +38,36 @@ require_once 'db_connect.php'; // Include database connection
     </div>
 
     <script>
-       // Function to analyze the sentiment of the tweet
-function analyzeTweet() {
-    const tweet = document.getElementById("tweetInput").value.trim();
+        async function analyzeTweet() {
+            const tweet = document.getElementById("tweetInput").value.trim();
 
-    if (tweet === "") {
-        alert("Please enter a tweet to analyze.");
-        return;
-    }
+            if (tweet === "") {
+                alert("Please enter a tweet to analyze.");
+                return;
+            }
 
-    // Check for percentages in the tweet
-    const percentageResult = analyzePercentage(tweet);
-    if (percentageResult) {
-        displayPercentageResult(percentageResult);
-    } else {
-        // Analyze single-tweet sentiment using polarity logic
-        const sentimentResult = analyzePolarity(tweet);
-        displayResult(sentimentResult);
-    }
-}
+            let analysisData;
 
+            // Analyze using percentage logic
+            const percentageResult = analyzePercentage(tweet);
+            if (percentageResult) {
+                analysisData = percentageResult;
+                displayResult(analysisData);
+            } else {
+                // Fallback to polarity analysis if percentage logic doesn't apply
+                analysisData = analyzePolarity(tweet);
+                displayResult(analysisData);
+            }
+
+            // Log the analysis result to the server
+            await fetch('log_analysis.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tweet, ...analysisData })
+            });
+        }
+
+      
 // Function to handle percentage-based tweets
 function analyzePercentage(tweet) {
     const percentages = tweet.match(/(\d+)%/g); // Look for percentages in the tweet
@@ -156,6 +166,7 @@ function displayResult({ sentiment, recommendation, confidence }) {
     // Show the result container
     document.querySelector(".result-container").style.display = 'block';
 }
+
 
     </script>
 </body>
